@@ -37,7 +37,7 @@ io.on("connection", (socket) => {
 
 // HTTP route สำหรับทดสอบ
 app.get("/", (req, res) => {
-  res.send("Socket.IO server is running...");
+  res.send("Socket.IO server is running......");
 });
 
 // เริ่ม server
