@@ -6,18 +6,20 @@ import dotenv from "dotenv";
 dotenv.config(); // โหลดค่า .env
 
 const app = express();
-const server = http.createServer(app);
+const server = http.createServer((_, res) => { res.writeHead(200); res.end("OK"); });
 
 // อ่านค่าจาก .env
-const PORT = process.env.PORT || 4000;
-const ORIGIN = process.env.CORS_ORIGIN || "http://localhost:3000";
+const PORT = process.env.PORT;
+const ORIGIN = process.env.CORS_ORIGIN;
 
 const io = new Server(server, {
+  path: "/socket.io",
   cors: {
     origin: ORIGIN,
     methods: ["GET", "POST"],
     credentials: true
-  }
+  },
+  transports: ["websocket","polling"], // เปิด fallback เผื่อ
 });
 
 // เมื่อมี client connect
@@ -45,3 +47,7 @@ server.listen(PORT, () => {
   console.log(`🚀 Server running at http://localhost:${PORT}`);
   console.log(`🌐 Allowed CORS origin: ${ORIGIN}`);
 });
+
+
+io.on("connection", s => console.log("connected", s.id));
+server.listen(4000);
