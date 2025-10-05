@@ -43,11 +43,11 @@ app.get("/", (req, res) => {
 });
 
 // เริ่ม server
-// server.listen(PORT, () => {
-//   console.log(`🚀 Server running at http://localhost:${PORT}`);
-//   console.log(`🌐 Allowed CORS origin: ${ORIGIN}`);
-// });
+server.listen(PORT, () => {
+  console.log(`🚀 Server running at http://localhost:${PORT}`);
+  console.log(`🌐 Allowed CORS origin: ${ORIGIN}`);
+});
 
 
-io.on("connection", s => console.log("connected", s.id));
-server.listen(4000);
+//io.on("connection", s => console.log("connected", s.id));
+// server.listen(4000);
