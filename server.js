@@ -9,7 +9,7 @@ const app = express();
 const server = http.createServer((_, res) => { res.writeHead(200); res.end("OK"); });
 
 // อ่านค่าจาก .env
-//const PORT = process.env.PORT;
+const PORT = process.env.PORT;
 const ORIGIN = process.env.CORS_ORIGIN;
 
 const io = new Server(server, {
