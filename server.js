@@ -1,53 +1,64 @@
-import express from "express";
-import http from "http";
-import { Server } from "socket.io";
-import dotenv from "dotenv";
+require('dotenv').config();
+const express = require('express');
+const http = require('http');
+const { Server } = require('socket.io');
+const cors = require('cors');
 
-dotenv.config(); // โหลดค่า .env
+const PORT = process.env.PORT || 4001;
+const CLIENT_ORIGIN = process.env.CLIENT_ORIGIN;
 
 const app = express();
-const server = http.createServer((_, res) => { res.writeHead(200); res.end("OK"); });
+app.use(cors({ origin: CLIENT_ORIGIN }));
 
-// อ่านค่าจาก .env
-const PORT = process.env.PORT;
-const ORIGIN = process.env.CORS_ORIGIN;
+const server = http.createServer(app);
 
 const io = new Server(server, {
-  path: "/socket.io",
   cors: {
-    origin: ORIGIN,
-    methods: ["GET", "POST"],
+    origin: ['https://isr.sakerp.org'],
+    methods: ['GET', 'POST'],
     credentials: true
   },
-  transports: ["websocket","polling"], // เปิด fallback เผื่อ
+  // ปรับแต่งเพิ่มเติมได้ เช่น pingTimeout/pingInterval
 });
 
-// เมื่อมี client connect
-io.on("connection", (socket) => {
-  console.log("✅ Client connected:", socket.id);
+app.get('/', (_req, res) => {
+  res.send('Socket.IO server is running ✅');
+});
 
-  // รับ event ตัวอย่าง
-  socket.on("ping", (msg) => {
-    console.log("📩 Received from client:", msg);
-    socket.emit("pong", `Server response: ${msg}`);
+// ตัวอย่าง event
+io.on('connection', (socket) => {
+  console.log('🔌 Client connected:', socket.id);
+
+  // ส่ง welcome ไปหา client ที่เพิ่งต่อ
+  socket.emit('server:welcome', { msg: 'Welcome from server', id: socket.id });
+
+  // รับข้อความจาก client
+  socket.on('client:ping', (payload) => {
+    console.log('📨 client:ping ->', payload);
+    // โต้กลับผู้ส่ง
+    socket.emit('server:pong', { ok: true, received: payload });
+    // กระจายให้ทุก client
+    io.emit('server:broadcast', { from: socket.id, data: payload });
   });
 
-  socket.on("disconnect", () => {
-    console.log("❌ Client disconnected:", socket.id);
+  // ตัวอย่าง join room
+  socket.on('room:join', (room) => {
+    socket.join(room);
+    socket.emit('room:joined', room);
+  });
+
+  // ส่งเฉพาะ room (ถ้าต้องการ)
+  socket.on('room:message', ({ room, text }) => {
+    io.to(room).emit('room:message', { from: socket.id, text });
+  });
+
+  socket.on('disconnect', (reason) => {
+    console.log('❌ Client disconnected:', socket.id, reason);
   });
 });
 
-// HTTP route สำหรับทดสอบ
-app.get("/", (req, res) => {
-  res.send("Socket.IO server is running......");
-});
-
-// เริ่ม server
 server.listen(PORT, () => {
-  console.log(`🚀 Server running at http://localhost:${PORT}`);
-  console.log(`🌐 Allowed CORS origin: ${ORIGIN}`);
+  console.log(`🚀 Socket.IO server listening on ${PORT}`);
 });
 
 
-//io.on("connection", s => console.log("connected", s.id));
-// server.listen(4000);
